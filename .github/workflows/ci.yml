@@ -134,8 +134,11 @@ jobs:
       uses: docker/build-push-action@v5
       with:
         push: true
-        tags: docker.io/${{ secrets.DOCKER_USERNAME }}/jwt-validator:${{ steps.get_version.outputs.tag }}
+        tags: |
+          docker.io/${{ secrets.DOCKER_USERNAME }}/jwt-validator:${{ steps.get_version.outputs.tag }}
+          docker.io/${{ secrets.DOCKER_USERNAME }}/jwt-validator:latest
         context: app
+
     
     - name: Create GitHub Release
       id: create_release
