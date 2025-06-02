@@ -20,7 +20,7 @@ COPY --from=build /app/target/*.jar app.jar
 
 EXPOSE 8080
 
-ENV DD_SERVICE=app-jwt-validator
+ENV DD_SERVICE=jwt-validator
 ENV DD_ENV=prod
 ENV DD_VERSION=1.0.0
 ENV DD_AGENT_HOST=datadog-agent
