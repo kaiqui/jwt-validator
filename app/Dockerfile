@@ -23,7 +23,7 @@ EXPOSE 8080
 ENV DD_SERVICE=jwt-validator
 ENV DD_ENV=prod
 ENV DD_VERSION=1.0.0
-ENV DD_AGENT_HOST=datadog-agent
+ENV DD_AGENT_HOST=localhost
 ENV DD_LOGS_INJECTION=true
 ENV JAVA_TOOL_OPTIONS="-javaagent:/app/dd-java-agent.jar -XX:MaxRAMPercentage=75.0 -XX:InitialRAMPercentage=50.0 -XX:+ExitOnOutOfMemoryError"
 
