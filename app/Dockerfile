@@ -17,6 +17,14 @@ COPY --from=build /app/target/*.jar app.jar
 
 EXPOSE 8080
 
-ENV JAVA_TOOL_OPTIONS=-javaagent:/app/dd-java-agent.jar -Ddd.agent.host=datadog-agent -Ddd.service=app-jwt-validator -Ddd.env=prod -Ddd.version=1.0.0 -Ddd.logs.injection=true
+ENV JAVA_TOOL_OPTIONS="-javaagent:/app/dd-java-agent.jar \
+ -Ddd.agent.host=datadog-agent \
+ -Ddd.service=app-jwt-validator \
+ -Ddd.env=prod \
+ -Ddd.version=1.0.0 \
+ -Ddd.logs.injection=true \
+ -XX:MaxRAMPercentage=75.0 \
+ -XX:InitialRAMPercentage=50.0 \
+ -XX:+ExitOnOutOfMemoryError"
 
 ENTRYPOINT ["java", "-jar", "app.jar"]
