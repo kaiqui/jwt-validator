@@ -62,7 +62,7 @@ jobs:
           DEPLOYMENT_ID=$(aws deploy create-deployment \
             --application-name $APPLICATION_NAME \
             --deployment-group-name $DEPLOYMENT_GROUP_NAME \
-            --revision "revisionType=AppSpecContent,appSpecContent={\"content\":\"$(sed 's/\"/\\"/g' AppSpec.yml)\"}" \
+            --revision "revisionType=AppSpecContent,appSpecContent={\"content\":\"$(sed 's/"/\\"/g' AppSpec.yml | awk '{printf "%s\\n", $0}')" }" \
             --deployment-config-name CodeDeployDefault.ECSCanary10Percent5Minutes \
             --description "Deploy automático via GitHub Actions" \
             --query "deploymentId" --output text)
