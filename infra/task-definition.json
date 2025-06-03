@@ -1,0 +1,64 @@
+{
+  "family": "jwt-validator",
+  "networkMode": "awsvpc",
+  "cpu": "256",
+  "memory": "512",
+  "requiresCompatibilities": ["FARGATE"],
+  "executionRoleArn": "arn:aws:iam::278119224443:role/ecs-cluster-task-execution-role",
+  "taskRoleArn": "arn:aws:iam::278119224443:role/ecs-cluster-datadog-agent-task-role",
+  "containerDefinitions": [
+    {
+      "name": "datadog-agent",
+      "image": "datadog/agent:latest",
+      "essential": true,
+      "portMappings": [
+        { "containerPort": 8126, "hostPort": 8126, "protocol": "tcp" },
+        { "containerPort": 8125, "hostPort": 8125, "protocol": "udp" }
+      ],
+      "environment": [
+        { "name": "ECS_FARGATE", "value": "true" },
+        { "name": "DD_APM_RECEIVER_PORT", "value": "8126" },
+        { "name": "DD_APM_ENABLED", "value": "true" },
+        { "name": "DD_LOGS_ENABLED", "value": "true" },
+        { "name": "DD_API_KEY", "value": "${DD_API_KEY}" },
+        { "name": "DD_SITE", "value": "datadoghq.com" }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/datadog-agent",
+          "awslogs-region": "sa-east-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    },
+    {
+      "name": "jwt-validator",
+      "image": "docker.io/kailima/jwt-validator:latest",
+      "essential": true,
+      "portMappings": [
+        { "containerPort": 8080, "hostPort": 8080, "protocol": "tcp" }
+      ],
+      "environment": [
+        { "name": "DD_SERVICE", "value": "jwt-validator" },
+        { "name": "DD_TRACE_ENABLED", "value": "true" },
+        { "name": "DD_LOGS_INJECTION", "value": "true" },
+        { "name": "DD_ENV", "value": "prod" },
+        { "name": "DD_AGENT_HOST", "value": "localhost" },
+        { "name": "DD_VERSION", "value": "1.0.0" }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/jwt-validator",
+          "awslogs-region": "sa-east-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ],
+  "tags": [
+    { "key": "Project", "value": "ecs-canary" },
+    { "key": "Environment", "value": "dev" }
+  ]
+}
