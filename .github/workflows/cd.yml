@@ -11,7 +11,6 @@ env:
   SERVICE_NAME: jwt-validator
   APPLICATION_NAME: jwt-validator-codedeploy-app
   DEPLOYMENT_GROUP_NAME: jwt-validator-deployment-group
-  IMAGE_NAME: kailima/jwt-validator:latest
   DD_API_KEY: ${{ secrets.DD_API_KEY }}
 
 jobs:
