@@ -60,14 +60,18 @@ jobs:
         working-directory: infra
         run: |
           DEPLOYMENT_ID=$(aws deploy create-deployment \
-            --application-name $APPLICATION_NAME \
-            --deployment-group-name $DEPLOYMENT_GROUP_NAME \
-            --revision "revisionType=AppSpecContent,appSpecContent={\"content\":\"$(sed 's/"/\\"/g' AppSpec.yml | awk '{printf "%s\\n", $0}')" }" \
-            --deployment-config-name CodeDeployDefault.ECSCanary10Percent5Minutes \
-            --description "Deploy automático via GitHub Actions" \
-            --query "deploymentId" --output text)
+          --application-name $APPLICATION_NAME \
+          --deployment-group-name $DEPLOYMENT_GROUP_NAME \
+          --revision "revisionType=AppSpecContent,appSpecContent={\"content\":\"version: 0.0\\nResources:\\n  - TargetService:\\n      Type: AWS::ECS::Service\\n      Properties:\\n        TaskDefinition: \\\"$TASK_DEF_ARN\\\"\\n        LoadBalancerInfo:\\n          ContainerName: \\\"jwt-validator\\\"\\n          ContainerPort: 8080\\n\"}" \
+          --deployment-config-name CodeDeployDefault.ECSCanary10Percent5Minutes \
+          --description "Deploy automático via GitHub Actions" \
+          --query "deploymentId" \
+          --output text)
+
           echo "DEPLOYMENT_ID=$DEPLOYMENT_ID" >> $GITHUB_ENV
           echo "Deployment iniciado: $DEPLOYMENT_ID"
+
+
 
       - name: Exibir status
         run: |
