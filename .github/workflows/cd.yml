@@ -16,7 +16,7 @@ env:
 
 jobs:
   build_and_deploy:
-    name: Build, Push, Register Task and Deploy
+    name: Register Task and Deploy
     runs-on: ubuntu-latest
 
     steps:
@@ -63,7 +63,7 @@ jobs:
           DEPLOYMENT_ID=$(aws deploy create-deployment \
             --application-name $APPLICATION_NAME \
             --deployment-group-name $DEPLOYMENT_GROUP_NAME \
-            --revision "revisionType=AppSpecContent,appSpecContent={\"content\":\"$(sed 's/\"/\\"/g' appspec.yml)\"}" \
+            --revision "revisionType=AppSpecContent,appSpecContent={\"content\":\"$(sed 's/\"/\\"/g' AppSpec.yml)\"}" \
             --deployment-config-name CodeDeployDefault.ECSCanary10Percent5Minutes \
             --description "Deploy automático via GitHub Actions" \
             --query "deploymentId" --output text)
