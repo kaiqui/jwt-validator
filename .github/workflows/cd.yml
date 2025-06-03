@@ -59,17 +59,24 @@ jobs:
       - name: Deploy via CodeDeploy
         working-directory: infra
         run: |
-          DEPLOYMENT_ID=$(aws deploy create-deployment \
-          --application-name $APPLICATION_NAME \
-          --deployment-group-name $DEPLOYMENT_GROUP_NAME \
-          --revision "revisionType=AppSpecContent,appSpecContent={\"content\":\"version: 0.0\\nResources:\\n  - TargetService:\\n      Type: AWS::ECS::Service\\n      Properties:\\n        TaskDefinition: \\\"$TASK_DEF_ARN\\\"\\n        LoadBalancerInfo:\\n          ContainerName: \\\"jwt-validator\\\"\\n          ContainerPort: 8080\\n\"}" \
-          --deployment-config-name CodeDeployDefault.ECSCanary10Percent5Minutes \
-          --description "Deploy automático via GitHub Actions" \
-          --query "deploymentId" \
-          --output text)
+          APP_SPEC_JSON=$(cat <<EOF
+          {
+            "content": "version: 0.0\\nResources:\\n  - TargetService:\\n      Type: AWS::ECS::Service\\n      Properties:\\n        TaskDefinition: \\\"$TASK_DEF_ARN\\\"\\n        LoadBalancerInfo:\\n          ContainerName: \\\"jwt-validator\\\"\\n          ContainerPort: 8080\\n"
+          }
+          EOF
+          )
 
-          echo "DEPLOYMENT_ID=$DEPLOYMENT_ID" >> $GITHUB_ENV
+          DEPLOYMENT_ID=$(aws deploy create-deployment \
+            --application-name $APPLICATION_NAME \
+            --deployment-group-name $DEPLOYMENT_GROUP_NAME \
+            --revision revisionType=AppSpecContent,appSpecContent="$APP_SPEC_JSON" \
+            --deployment-config-name CodeDeployDefault.ECSCanary10Percent5Minutes \
+            --description "Deploy automático via GitHub Actions" \
+            --query "deploymentId" --output text)
+
           echo "Deployment iniciado: $DEPLOYMENT_ID"
+          echo "DEPLOYMENT_ID=$DEPLOYMENT_ID" >> $GITHUB_ENV
+
 
 
 
