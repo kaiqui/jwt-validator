@@ -5,6 +5,9 @@ on:
     branches:
       - master
     types: [closed]
+  push:
+    branches:
+      - master
 
 env:
   AWS_REGION: sa-east-1
@@ -39,46 +42,49 @@ jobs:
             --output text)
           echo "TASK_DEF_ARN=$TASK_DEF_ARN" >> $GITHUB_ENV
 
-      - name: Gerar AppSpec.yml dinamicamente
-        working-directory: infra
-        run: |
-          REVISION=$(echo $TASK_DEF_ARN | awk -F: '{print $NF}')
-          cat > AppSpec.yml <<EOF
-            version: 0.0
-            Resources:
-            - TargetService:
-                Type: AWS::ECS::Service
-                Properties:
-                    TaskDefinition: "$TASK_DEF_ARN"
-                    LoadBalancerInfo:
-                    ContainerName: "jwt-validator"
-                    ContainerPort: 8080
-                    PlatformVersion: "LATEST"
-            EOF
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
 
       - name: Deploy via CodeDeploy
         working-directory: infra
         run: |
-          APP_SPEC_JSON=$(cat <<EOF
-          {
-            "content": "version: 0.0\\nResources:\\n  - TargetService:\\n      Type: AWS::ECS::Service\\n      Properties:\\n        TaskDefinition: \\\"$TASK_DEF_ARN\\\"\\n        LoadBalancerInfo:\\n          ContainerName: \\\"jwt-validator\\\"\\n          ContainerPort: 8080\\n"
-          }
+          APP_SPEC_CONTENT=$(cat <<EOF
+          version: 0.0
+          Resources:
+            - TargetService:
+                Type: AWS::ECS::Service
+                Properties:
+                  TaskDefinition: "$TASK_DEF_ARN"
+                  LoadBalancerInfo:
+                    ContainerName: "jwt-validator"
+                    ContainerPort: 8080
           EOF
           )
 
+          # Properly JSON-escape the content string
+          JSON_ESCAPED_CONTENT=$(printf '%s' "$APP_SPEC_CONTENT" | jq -Rs .)
+
+          # Create the revision JSON structure
+          REVISION_JSON=$(jq -n \
+            --arg content "$JSON_ESCAPED_CONTENT" \
+            '{
+              "revisionType": "AppSpecContent",
+              "appSpecContent": {
+                "content": $content
+              }
+            }')
+
+          # Create the deployment
           DEPLOYMENT_ID=$(aws deploy create-deployment \
-            --application-name $APPLICATION_NAME \
-            --deployment-group-name $DEPLOYMENT_GROUP_NAME \
-            --revision revisionType=AppSpecContent,appSpecContent="$APP_SPEC_JSON" \
+            --application-name "$APPLICATION_NAME" \
+            --deployment-group-name "$DEPLOYMENT_GROUP_NAME" \
+            --revision "$REVISION_JSON" \
             --deployment-config-name CodeDeployDefault.ECSCanary10Percent5Minutes \
             --description "Deploy automático via GitHub Actions" \
             --query "deploymentId" --output text)
 
           echo "Deployment iniciado: $DEPLOYMENT_ID"
           echo "DEPLOYMENT_ID=$DEPLOYMENT_ID" >> $GITHUB_ENV
-
-
-
 
       - name: Exibir status
         run: |
