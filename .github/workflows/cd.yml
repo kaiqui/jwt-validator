@@ -11,12 +11,11 @@ env:
   SERVICE_NAME: jwt-validator
   APPLICATION_NAME: jwt-validator-codedeploy-app
   DEPLOYMENT_GROUP_NAME: jwt-validator-deployment-group
-  IMAGE_NAME: kailima/jwt-validator:latest
   DD_API_KEY: ${{ secrets.DD_API_KEY }}
 
 jobs:
   build_and_deploy:
-    name: Build, Push, Register Task and Deploy
+    name: Register Task and Deploy
     runs-on: ubuntu-latest
 
     steps:
@@ -63,7 +62,7 @@ jobs:
           DEPLOYMENT_ID=$(aws deploy create-deployment \
             --application-name $APPLICATION_NAME \
             --deployment-group-name $DEPLOYMENT_GROUP_NAME \
-            --revision "revisionType=AppSpecContent,appSpecContent={\"content\":\"$(sed 's/\"/\\"/g' appspec.yml)\"}" \
+            --revision "revisionType=AppSpecContent,appSpecContent={\"content\":\"$(sed 's/\"/\\"/g' AppSpec.yml)\"}" \
             --deployment-config-name CodeDeployDefault.ECSCanary10Percent5Minutes \
             --description "Deploy automático via GitHub Actions" \
             --query "deploymentId" --output text)
