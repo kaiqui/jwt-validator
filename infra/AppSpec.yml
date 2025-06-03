@@ -3,7 +3,7 @@ Resources:
   - TargetService:
       Type: AWS::ECS::Service
       Properties:
-        TaskDefinition: "arn:aws:ecs:sa-east-1:278119224443:task-definition/jwt-validator"
+        TaskDefinition: "$TASK_DEF_ARN"
         LoadBalancerInfo:
           ContainerName: "jwt-validator"
           ContainerPort: 8080
