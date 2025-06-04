@@ -47,28 +47,32 @@ jobs:
 
       - name: Deploy via CodeDeploy
         run: |
-          REVISION_JSON=$(jq -n \
+          APP_SPEC_CONTENT=$(jq -n \
             --arg task_arn "$TASK_DEF_ARN" \
             '{
-              "revisionType": "AppSpecContent",
-              "appSpecContent": {
-                "content": {
-                  "version": 1,
-                  "Resources": [
-                    {
-                      "TargetService": {
-                        "Type": "AWS::ECS::Service",
-                        "Properties": {
-                          "TaskDefinition": $task_arn,
-                          "LoadBalancerInfo": {
-                            "ContainerName": "jwt-validator",
-                            "ContainerPort": 8080
-                          }
-                        }
+              version: 1,
+              Resources: [
+                {
+                  TargetService: {
+                    Type: "AWS::ECS::Service",
+                    Properties: {
+                      TaskDefinition: $task_arn,
+                      LoadBalancerInfo: {
+                        ContainerName: "jwt-validator",
+                        ContainerPort: 8080
                       }
                     }
-                  ]
+                  }
                 }
+              ]
+            }')
+
+          REVISION_JSON=$(jq -n \
+            --arg content "$APP_SPEC_CONTENT" \
+            '{
+              revisionType: "AppSpecContent",
+              appSpecContent: {
+                content: $content
               }
             }')
 
@@ -84,6 +88,7 @@ jobs:
 
           echo "Deployment iniciado: $DEPLOYMENT_ID"
           echo "DEPLOYMENT_ID=$DEPLOYMENT_ID" >> $GITHUB_ENV
+
 
       - name: Exibir status
         run: |
