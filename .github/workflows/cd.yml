@@ -61,7 +61,7 @@ jobs:
                         "Properties": {
                           "TaskDefinition": $task_arn,
                           "LoadBalancerInfo": {
-                            "ContainerName": jwt-validator,
+                            "ContainerName": "jwt-validator",
                             "ContainerPort": 8080
                           }
                         }
