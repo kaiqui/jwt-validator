@@ -46,39 +46,38 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y jq
 
       - name: Deploy via CodeDeploy
-        working-directory: infra
         run: |
-          APP_SPEC_CONTENT=$(cat <<EOF
-          version: 0.0
-          Resources:
-            - TargetService:
-                Type: AWS::ECS::Service
-                Properties:
-                  TaskDefinition: "$TASK_DEF_ARN"
-                  LoadBalancerInfo:
-                    ContainerName: "jwt-validator"
-                    ContainerPort: 8080
-          EOF
-          )
-
-          # Properly JSON-escape the content string
-          JSON_ESCAPED_CONTENT=$(printf '%s' "$APP_SPEC_CONTENT" | jq -Rs .)
-
-          # Create the revision JSON structure
           REVISION_JSON=$(jq -n \
-            --arg content "$JSON_ESCAPED_CONTENT" \
+            --arg task_arn "$TASK_DEF_ARN" \
             '{
               "revisionType": "AppSpecContent",
               "appSpecContent": {
-                "content": $content
+                "content": {
+                  "version": 1,
+                  "Resources": [
+                    {
+                      "TargetService": {
+                        "Type": "AWS::ECS::Service",
+                        "Properties": {
+                          "TaskDefinition": $task_arn,
+                          "LoadBalancerInfo": {
+                            "ContainerName": jwt-validator,
+                            "ContainerPort": 8080
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
               }
             }')
 
-          # Create the deployment
+          REVISION_STRING=$(echo "$REVISION_JSON" | jq -c)
+
           DEPLOYMENT_ID=$(aws deploy create-deployment \
             --application-name "$APPLICATION_NAME" \
             --deployment-group-name "$DEPLOYMENT_GROUP_NAME" \
-            --revision "$REVISION_JSON" \
+            --revision "$REVISION_STRING" \
             --deployment-config-name CodeDeployDefault.ECSCanary10Percent5Minutes \
             --description "Deploy automático via GitHub Actions" \
             --query "deploymentId" --output text)
