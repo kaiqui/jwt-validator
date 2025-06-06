@@ -1,4 +1,4 @@
-package com.jwt.validator.config;
+package com.jwt.validator.constants;
 
 import java.util.Arrays;
 import java.util.Collections;
