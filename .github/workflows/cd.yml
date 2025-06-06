@@ -5,9 +5,6 @@ on:
     branches:
       - master
     types: [closed]
-  push:
-    branches:
-      - master
 
 env:
   AWS_REGION: sa-east-1
