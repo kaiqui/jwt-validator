@@ -55,20 +55,19 @@ public class JwtValidationServiceImpl implements JwtValidationService {
             boolean isValid = validatePayloadStructure(payload) && validateClaims(payload);
 
             Map<String, Object> tags = new HashMap<>();
-            addTag(tags, "context.name", payload.path("Name").asText());
-            addTag(tags, "context.role", payload.path("Role").asText());
-            addTag(tags, "context.seed", payload.path("Seed").asText());
-
             if (isValid) {
                 log.info("JWT validation successful");
                 log.debug("Valid payload - [Name] {} [Role] {} [Seed] {}",
                         payload.path("Name").asText(),
                         payload.path("Role").asText(),
                         payload.path("Seed").asText());
+                addTag(tags, "context.role", payload.path("Role").asText());
+                addTag(tags, "context.seed", payload.path("Seed").asText());
                 startAndLogSpan(tags);
                 return ResponseEntity.ok(true);
             } else {
                 log.warn("JWT validation failed");
+                addTag(tags, "context.payload", payload.asText());
                 startAndLogSpan(tags);
                 return ResponseEntity.badRequest().body(false);
             }
