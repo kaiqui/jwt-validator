@@ -11,7 +11,6 @@ env:
   SERVICE_NAME: jwt-validator
   APPLICATION_NAME: jwt-validator-codedeploy-app
   DEPLOYMENT_GROUP_NAME: jwt-validator-deployment-group
-  DD_API_KEY: ${{ secrets.DD_API_KEY }}
 
 jobs:
   build_and_deploy:
@@ -28,6 +27,12 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
+      
+      - name: Replace DATADOG_API in task-definition.json
+        env:
+          DD_API_KEY: ${{ secrets.DD_API_KEY }}
+        run: |
+          sed -i "s/DATADOG_API/${DD_API_KEY}/g" task-definition.json
 
       - name: Registrar nova Task Definition
         working-directory: infra
