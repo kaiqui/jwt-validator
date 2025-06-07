@@ -20,7 +20,7 @@
         { "name": "DD_APM_RECEIVER_PORT", "value": "8126" },
         { "name": "DD_APM_ENABLED", "value": "true" },
         { "name": "DD_LOGS_ENABLED", "value": "true" },
-        { "name": "DD_API_KEY", "value": "${DD_API_KEY}" },
+        { "name": "DD_API_KEY", "value": "DATADOG_API" },
         { "name": "DD_SITE", "value": "datadoghq.com" }
       ],
       "logConfiguration": {
