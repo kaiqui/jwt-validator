@@ -1,5 +1,7 @@
 package com.jwt.validator.service.jwt;
 
+import org.springframework.http.ResponseEntity;
+
 public interface JwtValidationService {
-    boolean validateJwt(String token);
+    ResponseEntity<Boolean> validateJwt(String token);
 }
