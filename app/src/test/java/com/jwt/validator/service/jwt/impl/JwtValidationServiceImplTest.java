@@ -8,6 +8,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.ResponseEntity;
 
 import java.util.Base64;
 
@@ -27,27 +28,26 @@ class JwtValidationServiceImplTest {
 
     @Test
     void validateJwt_validToken_shouldReturnTrue() {
-        
         when(primeService.isPrime(7841)).thenReturn(true);
         String token = "eyJhbGciOiJIUzI1NiJ9.eyJSb2xlIjoiQWRtaW4iLCJTZWVkIjoiNzg0MSIsIk5hbWUiOiJUb25pbmhvIEFyYXVqbyJ9.QY05sIjtrcJnP533kQNk8QXcaleJ1Q01jWY_ZzIZuAg";
-        
-        
-        boolean result = jwtValidationService.validateJwt(token);
-        
-        
-        assertTrue(result);
+
+        ResponseEntity<Boolean> result = jwtValidationService.validateJwt(token);
+
+        assertTrue(result.getBody());
         verify(primeService).isPrime(7841);
     }
 
     @Test
     void validateJwt_invalidStructure_shouldReturnFalse() {
-        assertFalse(jwtValidationService.validateJwt("invalid.token.structure"));
+        ResponseEntity<Boolean> result = jwtValidationService.validateJwt("invalid.token.structure");
+        assertFalse(result.getBody());
         verifyNoInteractions(primeService);
     }
 
     @Test
     void validateJwt_invalidBase64_shouldReturnFalse() {
-        assertFalse(jwtValidationService.validateJwt("header.invalidBase64.signature"));
+        ResponseEntity<Boolean> result = jwtValidationService.validateJwt("header.invalidBase64.signature");
+        assertFalse(result.getBody());
         verifyNoInteractions(primeService);
     }
 
@@ -56,8 +56,9 @@ class JwtValidationServiceImplTest {
         String invalidJson = "{invalid: json}";
         String base64Payload = Base64.getUrlEncoder().encodeToString(invalidJson.getBytes());
         String token = "header." + base64Payload + ".signature";
-        
-        assertFalse(jwtValidationService.validateJwt(token));
+
+        ResponseEntity<Boolean> result = jwtValidationService.validateJwt(token);
+        assertFalse(result.getBody());
         verifyNoInteractions(primeService);
     }
 
@@ -65,8 +66,9 @@ class JwtValidationServiceImplTest {
     void validateJwt_missingClaims_shouldReturnFalse() throws JsonProcessingException {
         String payload = "{\"Role\":\"Admin\",\"Name\":\"Pedro Silva\"}";
         String token = createToken(payload);
-        
-        assertFalse(jwtValidationService.validateJwt(token));
+
+        ResponseEntity<Boolean> result = jwtValidationService.validateJwt(token);
+        assertFalse(result.getBody());
         verifyNoInteractions(primeService);
     }
 
@@ -74,8 +76,9 @@ class JwtValidationServiceImplTest {
     void validateJwt_extraClaims_shouldReturnFalse() throws JsonProcessingException {
         String payload = "{\"Role\":\"Admin\",\"Seed\":\"7841\",\"Name\":\"Pedro Silva\",\"Extra\":\"Value\"}";
         String token = createToken(payload);
-        
-        assertFalse(jwtValidationService.validateJwt(token));
+
+        ResponseEntity<Boolean> result = jwtValidationService.validateJwt(token);
+        assertFalse(result.getBody());
         verifyNoInteractions(primeService);
     }
 
@@ -83,8 +86,9 @@ class JwtValidationServiceImplTest {
     void validateJwt_nameWithNumbers_shouldReturnFalse() throws JsonProcessingException {
         String payload = "{\"Role\":\"External\",\"Seed\":\"88037\",\"Name\":\"M4ria Olivia\"}";
         String token = createToken(payload);
-        
-        assertFalse(jwtValidationService.validateJwt(token));
+
+        ResponseEntity<Boolean> result = jwtValidationService.validateJwt(token);
+        assertFalse(result.getBody());
         verifyNoInteractions(primeService);
     }
 
@@ -93,8 +97,9 @@ class JwtValidationServiceImplTest {
         String longName = "A".repeat(257);
         String payload = "{\"Role\":\"Admin\",\"Seed\":\"7841\",\"Name\":\"" + longName + "\"}";
         String token = createToken(payload);
-        
-        assertFalse(jwtValidationService.validateJwt(token));
+
+        ResponseEntity<Boolean> result = jwtValidationService.validateJwt(token);
+        assertFalse(result.getBody());
         verifyNoInteractions(primeService);
     }
 
@@ -102,19 +107,21 @@ class JwtValidationServiceImplTest {
     void validateJwt_invalidRole_shouldReturnFalse() throws JsonProcessingException {
         String payload = "{\"Role\":\"InvalidRole\",\"Seed\":\"7841\",\"Name\":\"Pedro Silva\"}";
         String token = createToken(payload);
-        
-        assertFalse(jwtValidationService.validateJwt(token));
+
+        ResponseEntity<Boolean> result = jwtValidationService.validateJwt(token);
+        assertFalse(result.getBody());
         verifyNoInteractions(primeService);
     }
 
     @Test
     void validateJwt_seedNotPrime_shouldReturnFalse() throws JsonProcessingException {
         when(primeService.isPrime(100)).thenReturn(false);
-        
+
         String payload = "{\"Role\":\"Admin\",\"Seed\":\"100\",\"Name\":\"Pedro Silva\"}";
         String token = createToken(payload);
-        
-        assertFalse(jwtValidationService.validateJwt(token));
+
+        ResponseEntity<Boolean> result = jwtValidationService.validateJwt(token);
+        assertFalse(result.getBody());
         verify(primeService).isPrime(100);
     }
 
@@ -122,8 +129,9 @@ class JwtValidationServiceImplTest {
     void validateJwt_seedNotNumber_shouldReturnFalse() throws JsonProcessingException {
         String payload = "{\"Role\":\"Admin\",\"Seed\":\"NotANumber\",\"Name\":\"Pedro Silva\"}";
         String token = createToken(payload);
-        
-        assertFalse(jwtValidationService.validateJwt(token));
+
+        ResponseEntity<Boolean> result = jwtValidationService.validateJwt(token);
+        assertFalse(result.getBody());
         verifyNoInteractions(primeService);
     }
 
@@ -131,8 +139,9 @@ class JwtValidationServiceImplTest {
     void validateJwt_caseSensitiveClaims_shouldReturnFalse() throws JsonProcessingException {
         String payload = "{\"role\":\"Admin\",\"seed\":\"7841\",\"name\":\"Pedro Silva\"}";
         String token = createToken(payload);
-        
-        assertFalse(jwtValidationService.validateJwt(token));
+
+        ResponseEntity<Boolean> result = jwtValidationService.validateJwt(token);
+        assertFalse(result.getBody());
         verifyNoInteractions(primeService);
     }
 
