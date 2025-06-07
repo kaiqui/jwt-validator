@@ -1,5 +1,6 @@
 package com.jwt.validator.controller;
 
+import com.jwt.validator.domain.dto.request.ValidationRequestDTO;
 import com.jwt.validator.service.jwt.JwtValidationService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -8,12 +9,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.BindingResult;
-import org.springframework.validation.FieldError;
-import org.springframework.web.bind.MethodArgumentNotValidException;
-
-import java.util.Collections;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -22,75 +17,80 @@ import static org.mockito.Mockito.*;
 class ValidationControllerTest {
 
     @Mock
-    private JwtValidationService validationService;
+    private JwtValidationService jwtValidationService;
 
     @InjectMocks
     private ValidationController validationController;
 
-    @Test
-    void validateJwt_validToken_shouldReturn200WithTrue() {
-        
-        String token = "valid.token";
-        ValidationController.ValidationRequest request = new ValidationController.ValidationRequest(token);
-        when(validationService.validateJwt(token)).thenReturn(true);
+    private final String validToken = "valid.token.here";
+    private final String invalidToken = "invalid.token.here";
 
-        
-        ResponseEntity<Boolean> response = validationController.validateJwt(request);
-
-        
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertTrue(response.getBody());
-        verify(validationService).validateJwt(token);
+    private ValidationRequestDTO createRequestDto(String token) {
+        return new ValidationRequestDTO(token);
     }
 
     @Test
-    void validateJwt_invalidToken_shouldReturn400WithFalse() {
-        
-        String token = "invalid.token";
-        ValidationController.ValidationRequest request = new ValidationController.ValidationRequest(token);
-        when(validationService.validateJwt(token)).thenReturn(false);
+    void validateJwt_WithValidToken_ShouldReturnTrue() {
+        Boolean mockResponse = true;
+        ResponseEntity<Boolean> mockEntity = ResponseEntity.ok(mockResponse);
+        ValidationRequestDTO request = createRequestDto(validToken);
 
-        
-        ResponseEntity<Boolean> response = validationController.validateJwt(request);
+        when(jwtValidationService.validateJwt(validToken)).thenReturn(mockEntity);
 
-        
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        assertFalse(response.getBody());
-        verify(validationService).validateJwt(token);
+        ResponseEntity<Boolean> actualResponse =
+                validationController.validateJwt(request);
+
+        assertTrue(actualResponse.getBody());
+        assertEquals(HttpStatus.OK, actualResponse.getStatusCode());
+        verify(jwtValidationService, times(1)).validateJwt(validToken);
     }
 
     @Test
-    void handleValidationExceptions_shouldReturnBadRequest() {
-        
-        MethodArgumentNotValidException ex = mock(MethodArgumentNotValidException.class);
-        BindingResult bindingResult = mock(BindingResult.class);
-        FieldError fieldError = new FieldError("object", "field", "default message");
-        
-        when(ex.getBindingResult()).thenReturn(bindingResult);
-        when(bindingResult.getFieldErrors()).thenReturn(List.of(fieldError));
+    void validateJwt_WithInvalidToken_ShouldReturnFalse() {
+        Boolean mockResponse = false;
+        ResponseEntity<Boolean> mockEntity =
+                ResponseEntity.status(HttpStatus.BAD_REQUEST).body(mockResponse);
+        ValidationRequestDTO request = createRequestDto(invalidToken);
 
-        
-        ResponseEntity<String> response = validationController.handleValidationExceptions(ex);
+        when(jwtValidationService.validateJwt(invalidToken)).thenReturn(mockEntity);
 
-        
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        assertEquals("Invalid request format: default message", response.getBody());
+        ResponseEntity<Boolean> actualResponse =
+                validationController.validateJwt(request);
+
+        assertFalse(actualResponse.getBody());
+        assertEquals(HttpStatus.BAD_REQUEST, actualResponse.getStatusCode());
+        verify(jwtValidationService, times(1)).validateJwt(invalidToken);
     }
 
     @Test
-    void handleValidationExceptions_noFieldErrors_shouldReturnGenericMessage() {
-        
-        MethodArgumentNotValidException ex = mock(MethodArgumentNotValidException.class);
-        BindingResult bindingResult = mock(BindingResult.class);
-        
-        when(ex.getBindingResult()).thenReturn(bindingResult);
-        when(bindingResult.getFieldErrors()).thenReturn(Collections.emptyList());
+    void validateJwt_WithEmptyToken_ShouldReturnBadRequest() {
+        String emptyToken = "";
+        ValidationRequestDTO request = createRequestDto(emptyToken);
 
-        
-        ResponseEntity<String> response = validationController.handleValidationExceptions(ex);
+        Boolean mockResponse = false;
+        ResponseEntity<Boolean> mockEntity =
+                ResponseEntity.badRequest().body(mockResponse);
 
-        
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        assertEquals("Invalid request format", response.getBody());
+        when(jwtValidationService.validateJwt(emptyToken)).thenReturn(mockEntity);
+
+        ResponseEntity<Boolean> actualResponse =
+                validationController.validateJwt(request);
+
+        assertFalse(actualResponse.getBody());
+        assertEquals(HttpStatus.BAD_REQUEST, actualResponse.getStatusCode());
+        verify(jwtValidationService, times(1)).validateJwt(emptyToken);
+    }
+
+    @Test
+    void validateJwt_WithNullToken_ShouldThrowException() {
+        ValidationRequestDTO request = createRequestDto(null);
+
+        when(jwtValidationService.validateJwt(null))
+                .thenThrow(new IllegalArgumentException("Token cannot be null"));
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            validationController.validateJwt(request);
+        });
+        verify(jwtValidationService, times(1)).validateJwt(null);
     }
 }
