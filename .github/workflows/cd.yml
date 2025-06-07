@@ -28,7 +28,8 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
       
-      - name: Replace DATADOG_API in task-definition.json
+      - name: Replace DATADOG_API in task-definition
+        working-directory: infra
         env:
           DD_API_KEY: ${{ secrets.DD_API_KEY }}
         run: |
