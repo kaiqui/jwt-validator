@@ -99,8 +99,14 @@ Esta aplicação é um validador de tokens JWT que verifica se um token atende �
 
 ### Observabilidade  
 - **Alertas**:  
-  - Alto consumo de CPU/Erros 5xx.  
-  - Alterações súbitas em taxa de rejeição.
+  - [JWT-API] Latencia P95 Acima do Esperado
+  - [JWT-API] Erros Acima do Esperado
+  - [ECS - JWT API] Consumo de CPU Acima do Esperado
+  - [ECS - JWT API] Consumo de Memoria Acima do Esperado
+- **Dashboard**:
+   - [Datadog Dashboard](https://app.datadoghq.com)
+- **Plus**:
+   - Todos os alertas quando acionados vão para o Discord.
 
 > **Nota**: Monitores pré-configurados estão em `jwt-datadog-monitors`.  
 
