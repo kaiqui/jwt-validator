@@ -67,7 +67,7 @@ public class JwtValidationServiceImpl implements JwtValidationService {
                 return ResponseEntity.ok(true);
             } else {
                 log.warn("JWT validation failed");
-                addTag(tags, "context.payload", payload.asText());
+                addTag(tags, "context.payload", payload.toString());
                 startAndLogSpan(tags);
                 return ResponseEntity.badRequest().body(false);
             }
