@@ -6,7 +6,7 @@ import static com.jwt.validator.utils.tracing.DataDogUtils.startAndLogSpan;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jwt.validator.domain.constants.ValidationConstraints;
+import com.jwt.validator.constants.ValidationConstants;
 import com.jwt.validator.utils.logs.LogManager;
 import com.jwt.validator.service.jwt.JwtValidationService;
 import com.jwt.validator.service.prime.PrimeService;
@@ -38,7 +38,6 @@ public class JwtValidationServiceImpl implements JwtValidationService {
         log.debug("Full token received: {}", token);
 
         try {
-            // Token null/blank check is now handled by DTO validation
             String[] parts = token.split("\\.");
             if (parts.length != 3) {
                 log.warn("Invalid JWT structure - expected 3 parts, got {}", parts.length);
@@ -116,7 +115,7 @@ public class JwtValidationServiceImpl implements JwtValidationService {
         }
 
         if (!validateRole(payload.get("Role").asText())) {
-            log.warn("Role validation failed. Allowed roles", ValidationConstraints.ALLOWED_ROLES);
+            log.warn("Role validation failed. Allowed roles", ValidationConstants.ALLOWED_ROLES);
             return false;
         }
 
@@ -134,9 +133,9 @@ public class JwtValidationServiceImpl implements JwtValidationService {
             return false;
         }
 
-        if (name.length() > ValidationConstraints.MAX_NAME_LENGTH) {
+        if (name.length() > ValidationConstants.MAX_NAME_LENGTH) {
             log.warn("Name exceeds maximum length",
-                    String.valueOf(name.length()), String.valueOf(ValidationConstraints.MAX_NAME_LENGTH));
+                    String.valueOf(name.length()), String.valueOf(ValidationConstants.MAX_NAME_LENGTH));
             return false;
         }
 
@@ -149,7 +148,7 @@ public class JwtValidationServiceImpl implements JwtValidationService {
     }
 
     private boolean validateRole(String role) {
-        boolean isValid = ValidationConstraints.ALLOWED_ROLES.contains(role);
+        boolean isValid = ValidationConstants.ALLOWED_ROLES.contains(role);
         if (!isValid) {
             log.warn("Invalid role", role);
         }

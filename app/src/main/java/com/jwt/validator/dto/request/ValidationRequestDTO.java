@@ -1,4 +1,4 @@
-package com.jwt.validator.domain.dto.request;
+package com.jwt.validator.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 

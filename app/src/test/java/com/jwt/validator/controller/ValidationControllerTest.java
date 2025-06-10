@@ -1,6 +1,7 @@
 package com.jwt.validator.controller;
 
-import com.jwt.validator.domain.dto.request.ValidationRequestDTO;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.jwt.validator.dto.request.ValidationRequestDTO;
 import com.jwt.validator.service.jwt.JwtValidationService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,7 +31,7 @@ class ValidationControllerTest {
     }
 
     @Test
-    void validateJwt_WithValidToken_ShouldReturnTrue() {
+    void validateJwt_WithValidToken_ShouldReturnTrue() throws JsonProcessingException {
         Boolean mockResponse = true;
         ResponseEntity<Boolean> mockEntity = ResponseEntity.ok(mockResponse);
         ValidationRequestDTO request = createRequestDto(validToken);
@@ -46,7 +47,7 @@ class ValidationControllerTest {
     }
 
     @Test
-    void validateJwt_WithInvalidToken_ShouldReturnFalse() {
+    void validateJwt_WithInvalidToken_ShouldReturnFalse() throws JsonProcessingException {
         Boolean mockResponse = false;
         ResponseEntity<Boolean> mockEntity =
                 ResponseEntity.status(HttpStatus.BAD_REQUEST).body(mockResponse);
@@ -63,7 +64,7 @@ class ValidationControllerTest {
     }
 
     @Test
-    void validateJwt_WithEmptyToken_ShouldReturnBadRequest() {
+    void validateJwt_WithEmptyToken_ShouldReturnBadRequest() throws JsonProcessingException {
         String emptyToken = "";
         ValidationRequestDTO request = createRequestDto(emptyToken);
 
@@ -82,7 +83,7 @@ class ValidationControllerTest {
     }
 
     @Test
-    void validateJwt_WithNullToken_ShouldThrowException() {
+    void validateJwt_WithNullToken_ShouldThrowException() throws JsonProcessingException {
         ValidationRequestDTO request = createRequestDto(null);
 
         when(jwtValidationService.validateJwt(null))

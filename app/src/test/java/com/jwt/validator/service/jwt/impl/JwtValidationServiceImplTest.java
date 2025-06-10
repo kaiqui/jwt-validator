@@ -27,7 +27,7 @@ class JwtValidationServiceImplTest {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Test
-    void validateJwt_validToken_shouldReturnTrue() {
+    void validateJwt_validToken_shouldReturnTrue() throws JsonProcessingException {
         when(primeService.isPrime(7841)).thenReturn(true);
         String token = "eyJhbGciOiJIUzI1NiJ9.eyJSb2xlIjoiQWRtaW4iLCJTZWVkIjoiNzg0MSIsIk5hbWUiOiJUb25pbmhvIEFyYXVqbyJ9.QY05sIjtrcJnP533kQNk8QXcaleJ1Q01jWY_ZzIZuAg";
 
@@ -38,14 +38,14 @@ class JwtValidationServiceImplTest {
     }
 
     @Test
-    void validateJwt_invalidStructure_shouldReturnFalse() {
+    void validateJwt_invalidStructure_shouldReturnFalse() throws JsonProcessingException {
         ResponseEntity<Boolean> result = jwtValidationService.validateJwt("invalid.token.structure");
         assertFalse(result.getBody());
         verifyNoInteractions(primeService);
     }
 
     @Test
-    void validateJwt_invalidBase64_shouldReturnFalse() {
+    void validateJwt_invalidBase64_shouldReturnFalse() throws JsonProcessingException {
         ResponseEntity<Boolean> result = jwtValidationService.validateJwt("header.invalidBase64.signature");
         assertFalse(result.getBody());
         verifyNoInteractions(primeService);
