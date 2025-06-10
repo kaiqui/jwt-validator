@@ -1,6 +1,8 @@
 package com.jwt.validator.utils.tracing;
 
 import com.jwt.validator.utils.logs.LogManager;
+import com.jwt.validator.utils.logs.RequestUUIDHolder;
+
 import io.opentracing.Span;
 import io.opentracing.util.GlobalTracer;
 import org.apache.commons.lang3.StringUtils;
@@ -19,6 +21,7 @@ public class DataDogUtils {
 
         if (span != null) {
             log.info("Criando Span");
+            span.setTag("context.correlation_id", RequestUUIDHolder.getUuid());
             tags.forEach((key, value) -> {
                 if (value instanceof String && StringUtils.isNotBlank((String) value)) {
                     span.setTag(key, (String) value);
