@@ -6,7 +6,7 @@ import static com.jwt.validator.utils.tracing.DataDogUtils.startAndLogSpan;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jwt.validator.domain.constants.ValidationConstraints;
+import com.jwt.validator.constants.ValidationConstants;
 import com.jwt.validator.utils.logs.LogManager;
 import com.jwt.validator.service.jwt.JwtValidationService;
 import com.jwt.validator.service.prime.PrimeService;
@@ -33,66 +33,37 @@ public class JwtValidationServiceImpl implements JwtValidationService {
     }
 
     @Override
-    public ResponseEntity<Boolean> validateJwt(String token) {
+    public ResponseEntity<Boolean> validateJwt(String token) throws JsonProcessingException {
         log.info("Starting JWT validation process");
         log.debug("Full token received: {}", token);
 
-        try {
-            // Token null/blank check is now handled by DTO validation
-            String[] parts = token.split("\\.");
-            if (parts.length != 3) {
-                log.warn("Invalid JWT structure - expected 3 parts, got {}", parts.length);
-                Map<String, Object> tags = new HashMap<>();
-                addTag(tags, "context.invalid_cause", "Invalid JWT structure");
-                startAndLogSpan(tags);
-                return ResponseEntity.badRequest().body(false);
-            }
-
-            String payloadJson = new String(Base64.getUrlDecoder().decode(parts[1]), StandardCharsets.UTF_8);
-            log.debug("Decoded payload: {}", payloadJson);
-
-            JsonNode payload = objectMapper.readTree(payloadJson);
-            boolean isValid = validatePayloadStructure(payload) && validateClaims(payload);
-
+        String[] parts = token.split("\\.");
+        if (parts.length != 3) {
+            log.warn("Invalid JWT structure - expected 3 parts, got {}", parts.length);
             Map<String, Object> tags = new HashMap<>();
-            if (isValid) {
-                log.info("JWT validation successful");
-                log.debug("Valid payload - [Name] {} [Role] {} [Seed] {}",
-                        payload.path("Name").asText(),
-                        payload.path("Role").asText(),
-                        payload.path("Seed").asText());
-                addTag(tags, "context.role", payload.path("Role").asText());
-                addTag(tags, "context.seed", payload.path("Seed").asText());
-                startAndLogSpan(tags);
-                return ResponseEntity.ok(true);
-            } else {
-                log.warn("JWT validation failed");
-                addTag(tags, "context.payload", payload.toString());
-                startAndLogSpan(tags);
-                return ResponseEntity.badRequest().body(false);
-            }
-
-        } catch (IllegalArgumentException e) {
-            log.warn("Base64 decoding error: {}", e.getMessage());
-            Map<String, Object> tags = new HashMap<>();
-            addTag(tags, "context.invalid_cause", "Base64 decoding error");
+            addTag(tags, "context.invalid_cause", "Invalid JWT structure");
             startAndLogSpan(tags);
             return ResponseEntity.badRequest().body(false);
-        } catch (JsonProcessingException e) {
-            log.warn("Invalid JSON payload: {}", e.getMessage());
-            Map<String, Object> tags = new HashMap<>();
-            addTag(tags, "context.invalid_cause", "Invalid JSON payload");
-            startAndLogSpan(tags);
-            return ResponseEntity.badRequest().body(false);
-        } catch (Exception e) {
-            log.error("Unexpected exception during JWT validation: {}", e.getMessage());
-            Map<String, Object> tags = new HashMap<>();
-            addTag(tags, "context.error", e.getClass().getSimpleName());
-            startAndLogSpan(tags);
-            return ResponseEntity.badRequest().body(false);
-        } finally {
-            log.debug("JWT validation process completed");
         }
+
+        String payloadJson = new String(Base64.getUrlDecoder().decode(parts[1]), StandardCharsets.UTF_8);
+        log.debug("Decoded payload: {}", payloadJson);
+
+        JsonNode payload = objectMapper.readTree(payloadJson);
+        boolean isValid = validatePayloadStructure(payload) && validateClaims(payload);
+
+        Map<String, Object> tags = new HashMap<>();
+        if (isValid) {
+            log.info("JWT validation successful");
+            addTag(tags, "context.role", payload.path("Role").asText());
+            addTag(tags, "context.seed", payload.path("Seed").asText());
+        } else {
+            log.warn("JWT validation failed");
+            addTag(tags, "context.payload", payload.toString());
+        }
+        startAndLogSpan(tags);
+
+        return isValid ? ResponseEntity.ok(true) : ResponseEntity.badRequest().body(false);
     }
 
     private boolean validatePayloadStructure(JsonNode payload) {
@@ -116,7 +87,7 @@ public class JwtValidationServiceImpl implements JwtValidationService {
         }
 
         if (!validateRole(payload.get("Role").asText())) {
-            log.warn("Role validation failed. Allowed roles", ValidationConstraints.ALLOWED_ROLES);
+            log.warn("Role validation failed. Allowed roles", ValidationConstants.ALLOWED_ROLES);
             return false;
         }
 
@@ -134,9 +105,9 @@ public class JwtValidationServiceImpl implements JwtValidationService {
             return false;
         }
 
-        if (name.length() > ValidationConstraints.MAX_NAME_LENGTH) {
+        if (name.length() > ValidationConstants.MAX_NAME_LENGTH) {
             log.warn("Name exceeds maximum length",
-                    String.valueOf(name.length()), String.valueOf(ValidationConstraints.MAX_NAME_LENGTH));
+                    String.valueOf(name.length()), String.valueOf(ValidationConstants.MAX_NAME_LENGTH));
             return false;
         }
 
@@ -149,7 +120,7 @@ public class JwtValidationServiceImpl implements JwtValidationService {
     }
 
     private boolean validateRole(String role) {
-        boolean isValid = ValidationConstraints.ALLOWED_ROLES.contains(role);
+        boolean isValid = ValidationConstants.ALLOWED_ROLES.contains(role);
         if (!isValid) {
             log.warn("Invalid role", role);
         }

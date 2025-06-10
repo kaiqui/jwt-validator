@@ -1,6 +1,7 @@
 package com.jwt.validator.controller;
 
-import com.jwt.validator.domain.dto.request.ValidationRequestDTO;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.jwt.validator.dto.request.ValidationRequestDTO;
 import com.jwt.validator.service.jwt.JwtValidationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -27,7 +28,7 @@ public class ValidationController {
                     content = @Content(schema = @Schema(implementation = Boolean.class)))
     })
     @GetMapping
-    public ResponseEntity<Boolean> validateJwt(@Valid ValidationRequestDTO validationRequest) {
+    public ResponseEntity<Boolean> validateJwt(@Valid ValidationRequestDTO validationRequest) throws JsonProcessingException {
         return jwtValidationService.validateJwt(validationRequest.token());
     }
 }
