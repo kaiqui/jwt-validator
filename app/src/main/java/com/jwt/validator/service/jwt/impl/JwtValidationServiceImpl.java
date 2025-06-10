@@ -33,37 +33,65 @@ public class JwtValidationServiceImpl implements JwtValidationService {
     }
 
     @Override
-    public ResponseEntity<Boolean> validateJwt(String token) throws JsonProcessingException {
+    public ResponseEntity<Boolean> validateJwt(String token) {
         log.info("Starting JWT validation process");
         log.debug("Full token received: {}", token);
 
-        String[] parts = token.split("\\.");
-        if (parts.length != 3) {
-            log.warn("Invalid JWT structure - expected 3 parts, got {}", parts.length);
+        try {
+            String[] parts = token.split("\\.");
+            if (parts.length != 3) {
+                log.warn("Invalid JWT structure - expected 3 parts, got {}", parts.length);
+                Map<String, Object> tags = new HashMap<>();
+                addTag(tags, "context.invalid_cause", "Invalid JWT structure");
+                startAndLogSpan(tags);
+                return ResponseEntity.badRequest().body(false);
+            }
+
+            String payloadJson = new String(Base64.getUrlDecoder().decode(parts[1]), StandardCharsets.UTF_8);
+            log.debug("Decoded payload: {}", payloadJson);
+
+            JsonNode payload = objectMapper.readTree(payloadJson);
+            boolean isValid = validatePayloadStructure(payload) && validateClaims(payload);
+
             Map<String, Object> tags = new HashMap<>();
-            addTag(tags, "context.invalid_cause", "Invalid JWT structure");
+            if (isValid) {
+                log.info("JWT validation successful");
+                log.debug("Valid payload - [Name] {} [Role] {} [Seed] {}",
+                        payload.path("Name").asText(),
+                        payload.path("Role").asText(),
+                        payload.path("Seed").asText());
+                addTag(tags, "context.role", payload.path("Role").asText());
+                addTag(tags, "context.seed", payload.path("Seed").asText());
+                startAndLogSpan(tags);
+                return ResponseEntity.ok(true);
+            } else {
+                log.warn("JWT validation failed");
+                addTag(tags, "context.payload", payload.toString());
+                startAndLogSpan(tags);
+                return ResponseEntity.badRequest().body(false);
+            }
+
+        } catch (IllegalArgumentException e) {
+            log.warn("Base64 decoding error: {}", e.getMessage());
+            Map<String, Object> tags = new HashMap<>();
+            addTag(tags, "context.invalid_cause", "Base64 decoding error");
             startAndLogSpan(tags);
             return ResponseEntity.badRequest().body(false);
+        } catch (JsonProcessingException e) {
+            log.warn("Invalid JSON payload: {}", e.getMessage());
+            Map<String, Object> tags = new HashMap<>();
+            addTag(tags, "context.invalid_cause", "Invalid JSON payload");
+            startAndLogSpan(tags);
+            return ResponseEntity.badRequest().body(false);
+        } catch (Exception e) {
+            log.error("Unexpected exception during JWT validation: {}", e.getMessage());
+            Map<String, Object> tags = new HashMap<>();
+            addTag(tags, "context.error", e.getClass().getSimpleName());
+            startAndLogSpan(tags);
+            return ResponseEntity.badRequest().body(false);
+        } finally {
+            log.debug("JWT validation process completed");
         }
-
-        String payloadJson = new String(Base64.getUrlDecoder().decode(parts[1]), StandardCharsets.UTF_8);
-        log.debug("Decoded payload: {}", payloadJson);
-
-        JsonNode payload = objectMapper.readTree(payloadJson);
-        boolean isValid = validatePayloadStructure(payload) && validateClaims(payload);
-
-        Map<String, Object> tags = new HashMap<>();
-        if (isValid) {
-            log.info("JWT validation successful");
-            addTag(tags, "context.role", payload.path("Role").asText());
-            addTag(tags, "context.seed", payload.path("Seed").asText());
-        } else {
-            log.warn("JWT validation failed");
-            addTag(tags, "context.payload", payload.toString());
-        }
-        startAndLogSpan(tags);
-
-        return isValid ? ResponseEntity.ok(true) : ResponseEntity.badRequest().body(false);
     }
 
     private boolean validatePayloadStructure(JsonNode payload) {
